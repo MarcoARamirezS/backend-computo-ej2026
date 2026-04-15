@@ -1,4 +1,4 @@
-# 🚀 DEMEN ERP Backend
+# 🚀 PROYECTO Backend
 
 Este proyecto corresponde a un **Backend empresarial** desarrollado con **Node.js + Express + Firebase Firestore**, diseñado como proyecto final académico para que los alumnos construyan el frontend consumiendo esta API.
 

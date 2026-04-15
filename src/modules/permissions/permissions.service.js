@@ -1,4 +1,5 @@
 import { permissionsRepository } from './permissions.repository.js'
+import { logAuditEvent } from '../../utils/audit.js'
 
 const DEFAULT_PERMISSIONS = [
   { code: 'auth:me', nombre: 'Ver usuario autenticado', descripcion: 'Permite consultar el usuario autenticado', modulo: 'auth' },
@@ -40,6 +41,7 @@ const DEFAULT_PERMISSIONS = [
   { code: 'recepciones:read', nombre: 'Ver recepciones', descripcion: 'Permite listar y ver recepciones', modulo: 'recepciones' },
   { code: 'recepciones:create', nombre: 'Crear recepciones', descripcion: 'Permite registrar recepciones', modulo: 'recepciones' },
   { code: 'recepciones:update', nombre: 'Editar recepciones', descripcion: 'Permite actualizar recepciones', modulo: 'recepciones' },
+  { code: 'recepciones:delete', nombre: 'Eliminar recepciones', descripcion: 'Permite eliminar recepciones', modulo: 'recepciones' },
 
   { code: 'audit:read', nombre: 'Ver auditoría', descripcion: 'Permite consultar la auditoría', modulo: 'audit' },
   { code: 'dashboard:read', nombre: 'Ver dashboard', descripcion: 'Permite consultar el dashboard', modulo: 'dashboard' }
@@ -101,7 +103,7 @@ export class PermissionsService {
     return this.sanitizePermission(permission)
   }
 
-  async create(payload) {
+  async create(payload, currentUser = null) {
     const existing = await permissionsRepository.findByCode(payload.code)
 
     if (existing) {
@@ -120,11 +122,24 @@ export class PermissionsService {
     }
 
     const created = await permissionsRepository.create(data)
+    const sanitized = this.sanitizePermission(created)
 
-    return this.sanitizePermission(created)
+    await logAuditEvent({
+      action: 'CREATE',
+      resource: 'permissions',
+      resourceId: created.id,
+      details: {
+        code: sanitized.code,
+        nombre: sanitized.nombre,
+        modulo: sanitized.modulo
+      },
+      currentUser
+    })
+
+    return sanitized
   }
 
-  async update(id, payload) {
+  async update(id, payload, currentUser = null) {
     const currentPermission = await permissionsRepository.findById(id)
 
     if (!currentPermission) {
@@ -153,11 +168,25 @@ export class PermissionsService {
     if (payload.modulo !== undefined) data.modulo = payload.modulo
 
     const updated = await permissionsRepository.update(id, data)
+    const sanitized = this.sanitizePermission(updated)
 
-    return this.sanitizePermission(updated)
+    await logAuditEvent({
+      action: 'UPDATE',
+      resource: 'permissions',
+      resourceId: updated.id,
+      details: {
+        changes: Object.keys(payload),
+        code: sanitized.code,
+        nombre: sanitized.nombre,
+        modulo: sanitized.modulo
+      },
+      currentUser
+    })
+
+    return sanitized
   }
 
-  async remove(id) {
+  async remove(id, currentUser = null) {
     const currentPermission = await permissionsRepository.findById(id)
 
     if (!currentPermission) {
@@ -168,10 +197,21 @@ export class PermissionsService {
 
     await permissionsRepository.remove(id)
 
+    await logAuditEvent({
+      action: 'DELETE',
+      resource: 'permissions',
+      resourceId: id,
+      details: {
+        code: currentPermission.code || '',
+        nombre: currentPermission.nombre || ''
+      },
+      currentUser
+    })
+
     return { success: true }
   }
 
-  async seed() {
+  async seed(currentUser = null) {
     const seeded = []
 
     for (const item of DEFAULT_PERMISSIONS) {
@@ -198,6 +238,16 @@ export class PermissionsService {
 
       seeded.push(this.sanitizePermission(created))
     }
+
+    await logAuditEvent({
+      action: 'SEED',
+      resource: 'permissions',
+      resourceId: '',
+      details: {
+        total: seeded.length
+      },
+      currentUser
+    })
 
     return {
       message: 'Permisos sembrados correctamente',

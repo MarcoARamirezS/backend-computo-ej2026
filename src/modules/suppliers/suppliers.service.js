@@ -1,4 +1,5 @@
 import { suppliersRepository } from './suppliers.repository.js'
+import { logAuditEvent } from '../../utils/audit.js'
 
 function normalizeOptionalText(value) {
   if (value === undefined) return undefined
@@ -72,7 +73,7 @@ export class SuppliersService {
     return this.sanitizeSupplier(supplier)
   }
 
-  async create(payload) {
+  async create(payload, currentUser = null) {
     const normalizedEmail = payload.email ? String(payload.email).trim().toLowerCase() : ''
     const normalizedRfc = payload.rfc ? String(payload.rfc).trim().toUpperCase() : ''
 
@@ -111,11 +112,25 @@ export class SuppliersService {
     }
 
     const created = await suppliersRepository.create(data)
+    const sanitized = this.sanitizeSupplier(created)
 
-    return this.sanitizeSupplier(created)
+    await logAuditEvent({
+      action: 'CREATE',
+      resource: 'suppliers',
+      resourceId: created.id,
+      details: {
+        nombre: sanitized.nombre,
+        rfc: sanitized.rfc,
+        email: sanitized.email,
+        activo: sanitized.activo
+      },
+      currentUser
+    })
+
+    return sanitized
   }
 
-  async update(id, payload) {
+  async update(id, payload, currentUser = null) {
     const currentSupplier = await suppliersRepository.findById(id)
 
     if (!currentSupplier) {
@@ -167,11 +182,25 @@ export class SuppliersService {
     if (payload.activo !== undefined) data.activo = payload.activo
 
     const updated = await suppliersRepository.update(id, data)
+    const sanitized = this.sanitizeSupplier(updated)
 
-    return this.sanitizeSupplier(updated)
+    await logAuditEvent({
+      action: 'UPDATE',
+      resource: 'suppliers',
+      resourceId: updated.id,
+      details: {
+        changes: Object.keys(payload),
+        nombre: sanitized.nombre,
+        rfc: sanitized.rfc,
+        activo: sanitized.activo
+      },
+      currentUser
+    })
+
+    return sanitized
   }
 
-  async toggleActive(id, activo) {
+  async toggleActive(id, activo, currentUser = null) {
     const currentSupplier = await suppliersRepository.findById(id)
 
     if (!currentSupplier) {
@@ -185,10 +214,23 @@ export class SuppliersService {
       updatedAt: new Date().toISOString()
     })
 
-    return this.sanitizeSupplier(updated)
+    const sanitized = this.sanitizeSupplier(updated)
+
+    await logAuditEvent({
+      action: 'TOGGLE_ACTIVE',
+      resource: 'suppliers',
+      resourceId: updated.id,
+      details: {
+        nombre: sanitized.nombre,
+        activo: sanitized.activo
+      },
+      currentUser
+    })
+
+    return sanitized
   }
 
-  async remove(id) {
+  async remove(id, currentUser = null) {
     const currentSupplier = await suppliersRepository.findById(id)
 
     if (!currentSupplier) {
@@ -198,6 +240,17 @@ export class SuppliersService {
     }
 
     await suppliersRepository.remove(id)
+
+    await logAuditEvent({
+      action: 'DELETE',
+      resource: 'suppliers',
+      resourceId: id,
+      details: {
+        nombre: currentSupplier.nombre || '',
+        rfc: currentSupplier.rfc || ''
+      },
+      currentUser
+    })
 
     return {
       success: true

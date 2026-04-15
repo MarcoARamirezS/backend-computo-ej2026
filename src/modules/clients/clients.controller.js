@@ -16,7 +16,7 @@ export class ClientsController {
   }
 
   async create(req, res) {
-    const client = await clientsService.create(req.body)
+    const client = await clientsService.create(req.body, req.user)
 
     return res.status(201).json({
       message: 'Cliente creado correctamente',
@@ -25,7 +25,7 @@ export class ClientsController {
   }
 
   async update(req, res) {
-    const client = await clientsService.update(req.params.id, req.body)
+    const client = await clientsService.update(req.params.id, req.body, req.user)
 
     return res.status(200).json({
       message: 'Cliente actualizado correctamente',
@@ -34,7 +34,7 @@ export class ClientsController {
   }
 
   async toggleActive(req, res) {
-    const client = await clientsService.toggleActive(req.params.id, req.body.activo)
+    const client = await clientsService.toggleActive(req.params.id, req.body.activo, req.user)
 
     return res.status(200).json({
       message: 'Estado del cliente actualizado correctamente',
@@ -43,7 +43,7 @@ export class ClientsController {
   }
 
   async remove(req, res) {
-    await clientsService.remove(req.params.id)
+    await clientsService.remove(req.params.id, req.user)
 
     return res.status(200).json({
       message: 'Cliente eliminado correctamente'

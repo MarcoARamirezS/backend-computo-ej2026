@@ -16,7 +16,7 @@ export class UsersController {
   }
 
   async create(req, res) {
-    const user = await usersService.create(req.body)
+    const user = await usersService.create(req.body, req.user)
 
     return res.status(201).json({
       message: 'Usuario creado correctamente',
@@ -25,7 +25,7 @@ export class UsersController {
   }
 
   async update(req, res) {
-    const user = await usersService.update(req.params.id, req.body)
+    const user = await usersService.update(req.params.id, req.body, req.user)
 
     return res.status(200).json({
       message: 'Usuario actualizado correctamente',
@@ -34,7 +34,7 @@ export class UsersController {
   }
 
   async toggleActive(req, res) {
-    const user = await usersService.toggleActive(req.params.id, req.body.activo)
+    const user = await usersService.toggleActive(req.params.id, req.body.activo, req.user)
 
     return res.status(200).json({
       message: 'Estado del usuario actualizado correctamente',
@@ -43,7 +43,7 @@ export class UsersController {
   }
 
   async remove(req, res) {
-    await usersService.remove(req.params.id)
+    await usersService.remove(req.params.id, req.user)
 
     return res.status(200).json({
       message: 'Usuario eliminado correctamente'

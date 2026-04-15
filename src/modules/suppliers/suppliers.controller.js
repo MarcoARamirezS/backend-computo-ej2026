@@ -16,7 +16,7 @@ export class SuppliersController {
   }
 
   async create(req, res) {
-    const supplier = await suppliersService.create(req.body)
+    const supplier = await suppliersService.create(req.body, req.user)
 
     return res.status(201).json({
       message: 'Proveedor creado correctamente',
@@ -25,7 +25,7 @@ export class SuppliersController {
   }
 
   async update(req, res) {
-    const supplier = await suppliersService.update(req.params.id, req.body)
+    const supplier = await suppliersService.update(req.params.id, req.body, req.user)
 
     return res.status(200).json({
       message: 'Proveedor actualizado correctamente',
@@ -34,7 +34,7 @@ export class SuppliersController {
   }
 
   async toggleActive(req, res) {
-    const supplier = await suppliersService.toggleActive(req.params.id, req.body.activo)
+    const supplier = await suppliersService.toggleActive(req.params.id, req.body.activo, req.user)
 
     return res.status(200).json({
       message: 'Estado del proveedor actualizado correctamente',
@@ -43,7 +43,7 @@ export class SuppliersController {
   }
 
   async remove(req, res) {
-    await suppliersService.remove(req.params.id)
+    await suppliersService.remove(req.params.id, req.user)
 
     return res.status(200).json({
       message: 'Proveedor eliminado correctamente'

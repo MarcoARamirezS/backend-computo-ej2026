@@ -1,4 +1,5 @@
 import { rolesRepository } from './roles.repository.js'
+import { logAuditEvent } from '../../utils/audit.js'
 
 export class RolesService {
   async list(query) {
@@ -54,7 +55,7 @@ export class RolesService {
     return this.sanitizeRole(role)
   }
 
-  async create(payload) {
+  async create(payload, currentUser = null) {
     const existing = await rolesRepository.findByNombre(payload.nombre)
 
     if (existing) {
@@ -72,11 +73,23 @@ export class RolesService {
     }
 
     const created = await rolesRepository.create(data)
+    const sanitized = this.sanitizeRole(created)
 
-    return this.sanitizeRole(created)
+    await logAuditEvent({
+      action: 'CREATE',
+      resource: 'roles',
+      resourceId: created.id,
+      details: {
+        nombre: sanitized.nombre,
+        permissionsCount: sanitized.permissions.length
+      },
+      currentUser
+    })
+
+    return sanitized
   }
 
-  async update(id, payload) {
+  async update(id, payload, currentUser = null) {
     const currentRole = await rolesRepository.findById(id)
 
     if (!currentRole) {
@@ -104,11 +117,24 @@ export class RolesService {
     if (payload.permissions !== undefined) data.permissions = payload.permissions
 
     const updated = await rolesRepository.update(id, data)
+    const sanitized = this.sanitizeRole(updated)
 
-    return this.sanitizeRole(updated)
+    await logAuditEvent({
+      action: 'UPDATE',
+      resource: 'roles',
+      resourceId: updated.id,
+      details: {
+        changes: Object.keys(payload),
+        nombre: sanitized.nombre,
+        permissionsCount: sanitized.permissions.length
+      },
+      currentUser
+    })
+
+    return sanitized
   }
 
-  async remove(id) {
+  async remove(id, currentUser = null) {
     const currentRole = await rolesRepository.findById(id)
 
     if (!currentRole) {
@@ -118,6 +144,16 @@ export class RolesService {
     }
 
     await rolesRepository.remove(id)
+
+    await logAuditEvent({
+      action: 'DELETE',
+      resource: 'roles',
+      resourceId: id,
+      details: {
+        nombre: currentRole.nombre || ''
+      },
+      currentUser
+    })
 
     return {
       success: true

@@ -16,7 +16,7 @@ export class RolesController {
   }
 
   async create(req, res) {
-    const role = await rolesService.create(req.body)
+    const role = await rolesService.create(req.body, req.user)
 
     return res.status(201).json({
       message: 'Rol creado correctamente',
@@ -25,7 +25,7 @@ export class RolesController {
   }
 
   async update(req, res) {
-    const role = await rolesService.update(req.params.id, req.body)
+    const role = await rolesService.update(req.params.id, req.body, req.user)
 
     return res.status(200).json({
       message: 'Rol actualizado correctamente',
@@ -34,7 +34,7 @@ export class RolesController {
   }
 
   async remove(req, res) {
-    await rolesService.remove(req.params.id)
+    await rolesService.remove(req.params.id, req.user)
 
     return res.status(200).json({
       message: 'Rol eliminado correctamente'

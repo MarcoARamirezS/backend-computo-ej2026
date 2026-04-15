@@ -1,4 +1,5 @@
 import { clientsRepository } from './clients.repository.js'
+import { logAuditEvent } from '../../utils/audit.js'
 
 function normalizeOptionalText(value) {
   if (value === undefined) return undefined
@@ -71,7 +72,7 @@ export class ClientsService {
     return this.sanitizeClient(client)
   }
 
-  async create(payload) {
+  async create(payload, currentUser = null) {
     const normalizedEmail = payload.email ? String(payload.email).trim().toLowerCase() : ''
     const normalizedRfc = payload.rfc ? String(payload.rfc).trim().toUpperCase() : ''
 
@@ -109,11 +110,25 @@ export class ClientsService {
     }
 
     const created = await clientsRepository.create(data)
+    const sanitized = this.sanitizeClient(created)
 
-    return this.sanitizeClient(created)
+    await logAuditEvent({
+      action: 'CREATE',
+      resource: 'clients',
+      resourceId: created.id,
+      details: {
+        nombre: sanitized.nombre,
+        rfc: sanitized.rfc,
+        email: sanitized.email,
+        activo: sanitized.activo
+      },
+      currentUser
+    })
+
+    return sanitized
   }
 
-  async update(id, payload) {
+  async update(id, payload, currentUser = null) {
     const currentClient = await clientsRepository.findById(id)
 
     if (!currentClient) {
@@ -164,11 +179,25 @@ export class ClientsService {
     if (payload.activo !== undefined) data.activo = payload.activo
 
     const updated = await clientsRepository.update(id, data)
+    const sanitized = this.sanitizeClient(updated)
 
-    return this.sanitizeClient(updated)
+    await logAuditEvent({
+      action: 'UPDATE',
+      resource: 'clients',
+      resourceId: updated.id,
+      details: {
+        changes: Object.keys(payload),
+        nombre: sanitized.nombre,
+        rfc: sanitized.rfc,
+        activo: sanitized.activo
+      },
+      currentUser
+    })
+
+    return sanitized
   }
 
-  async toggleActive(id, activo) {
+  async toggleActive(id, activo, currentUser = null) {
     const currentClient = await clientsRepository.findById(id)
 
     if (!currentClient) {
@@ -182,10 +211,23 @@ export class ClientsService {
       updatedAt: new Date().toISOString()
     })
 
-    return this.sanitizeClient(updated)
+    const sanitized = this.sanitizeClient(updated)
+
+    await logAuditEvent({
+      action: 'TOGGLE_ACTIVE',
+      resource: 'clients',
+      resourceId: updated.id,
+      details: {
+        nombre: sanitized.nombre,
+        activo: sanitized.activo
+      },
+      currentUser
+    })
+
+    return sanitized
   }
 
-  async remove(id) {
+  async remove(id, currentUser = null) {
     const currentClient = await clientsRepository.findById(id)
 
     if (!currentClient) {
@@ -195,6 +237,17 @@ export class ClientsService {
     }
 
     await clientsRepository.remove(id)
+
+    await logAuditEvent({
+      action: 'DELETE',
+      resource: 'clients',
+      resourceId: id,
+      details: {
+        nombre: currentClient.nombre || '',
+        rfc: currentClient.rfc || ''
+      },
+      currentUser
+    })
 
     return {
       success: true

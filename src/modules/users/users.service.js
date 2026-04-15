@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs'
 import { usersRepository } from './users.repository.js'
+import { logAuditEvent } from '../../utils/audit.js'
 
 export class UsersService {
   async list(query) {
@@ -65,7 +66,7 @@ export class UsersService {
     return this.sanitizeUser(user)
   }
 
-  async create(payload) {
+  async create(payload, currentUser = null) {
     const existingByUsuario = await usersRepository.findByUsuario(payload.usuario)
 
     if (existingByUsuario) {
@@ -99,20 +100,35 @@ export class UsersService {
     }
 
     const created = await usersRepository.create(data)
+    const sanitized = this.sanitizeUser(created)
 
-    return this.sanitizeUser(created)
+    await logAuditEvent({
+      action: 'CREATE',
+      resource: 'users',
+      resourceId: created.id,
+      details: {
+        usuario: sanitized.usuario,
+        email: sanitized.email,
+        role: sanitized.role,
+        roleId: sanitized.roleId,
+        activo: sanitized.activo
+      },
+      currentUser
+    })
+
+    return sanitized
   }
 
-  async update(id, payload) {
-    const currentUser = await usersRepository.findById(id)
+  async update(id, payload, currentUser = null) {
+    const currentUserRecord = await usersRepository.findById(id)
 
-    if (!currentUser) {
+    if (!currentUserRecord) {
       const error = new Error('Usuario no encontrado')
       error.statusCode = 404
       throw error
     }
 
-    if (payload.usuario && payload.usuario !== currentUser.usuario) {
+    if (payload.usuario && payload.usuario !== currentUserRecord.usuario) {
       const existingByUsuario = await usersRepository.findByUsuario(payload.usuario)
 
       if (existingByUsuario && existingByUsuario.id !== id) {
@@ -122,7 +138,7 @@ export class UsersService {
       }
     }
 
-    if (payload.email && payload.email !== currentUser.email) {
+    if (payload.email && payload.email !== currentUserRecord.email) {
       const existingByEmail = await usersRepository.findByEmail(payload.email)
 
       if (existingByEmail && existingByEmail.id !== id) {
@@ -150,14 +166,30 @@ export class UsersService {
     }
 
     const updated = await usersRepository.update(id, data)
+    const sanitized = this.sanitizeUser(updated)
 
-    return this.sanitizeUser(updated)
+    await logAuditEvent({
+      action: 'UPDATE',
+      resource: 'users',
+      resourceId: updated.id,
+      details: {
+        changes: Object.keys(payload),
+        usuario: sanitized.usuario,
+        email: sanitized.email,
+        role: sanitized.role,
+        roleId: sanitized.roleId,
+        activo: sanitized.activo
+      },
+      currentUser
+    })
+
+    return sanitized
   }
 
-  async toggleActive(id, activo) {
-    const currentUser = await usersRepository.findById(id)
+  async toggleActive(id, activo, currentUser = null) {
+    const currentUserRecord = await usersRepository.findById(id)
 
-    if (!currentUser) {
+    if (!currentUserRecord) {
       const error = new Error('Usuario no encontrado')
       error.statusCode = 404
       throw error
@@ -168,19 +200,43 @@ export class UsersService {
       updatedAt: new Date().toISOString()
     })
 
-    return this.sanitizeUser(updated)
+    const sanitized = this.sanitizeUser(updated)
+
+    await logAuditEvent({
+      action: 'TOGGLE_ACTIVE',
+      resource: 'users',
+      resourceId: updated.id,
+      details: {
+        usuario: sanitized.usuario,
+        activo: sanitized.activo
+      },
+      currentUser
+    })
+
+    return sanitized
   }
 
-  async remove(id) {
-    const currentUser = await usersRepository.findById(id)
+  async remove(id, currentUser = null) {
+    const currentUserRecord = await usersRepository.findById(id)
 
-    if (!currentUser) {
+    if (!currentUserRecord) {
       const error = new Error('Usuario no encontrado')
       error.statusCode = 404
       throw error
     }
 
     await usersRepository.remove(id)
+
+    await logAuditEvent({
+      action: 'DELETE',
+      resource: 'users',
+      resourceId: id,
+      details: {
+        usuario: currentUserRecord.usuario || '',
+        email: currentUserRecord.email || ''
+      },
+      currentUser
+    })
 
     return {
       success: true

@@ -260,24 +260,28 @@ npm run seed:first-user
 npm install
 ```
 
-### 2. Configurar Firebase
-Coloca tu archivo de credenciales en:
-```
-src/config/serviceAccountKey.json
-```
-
-### 3. Variables de entorno (.env)
+### 2. Variables de entorno (.env)
 ```env
-PORT=3001
-JWT_SECRET=supersecretkey
+PORT=
+NODE_ENV=development
+CORS_ORIGIN=
+
+JWT_SECRET=
+JWT_EXPIRES_IN=
+JWT_REFRESH_SECRET=
+JWT_REFRESH_EXPIRES_IN=
+
+FIREBASE_PROJECT_ID=
+FIREBASE_CLIENT_EMAIL=
+FIREBASE_PRIVATE_KEY=""
 ```
 
-### 4. Crear el usuario inicial
+### 3. Crear el usuario inicial
 ```bash
 npm run seed:first-user
 ```
 
-### 5. Ejecutar el servidor
+### 4. Ejecutar el servidor
 ```bash
 npm run dev
 ```

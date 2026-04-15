@@ -1,182 +1,183 @@
+# 🚀 DEMEN ERP Backend
 
-# ERP Académico Modular API
+Este proyecto corresponde a un **Backend empresarial** desarrollado con **Node.js + Express + Firebase Firestore**, diseñado como proyecto final académico para que los alumnos construyan el frontend consumiendo esta API.
 
-## 📌 Descripción General
-Este proyecto corresponde a un **backend desarrollado con Node.js** como parte de un sistema ERP académico modular. Está diseñado para que los estudiantes desarrollen posteriormente el frontend consumiendo esta API REST.
-
-El sistema incluye autenticación, gestión de usuarios y una arquitectura escalable basada en buenas prácticas de desarrollo backend.
+Incluye autenticación con JWT, control de accesos basado en roles y permisos (RBAC), auditoría de acciones del sistema y un dashboard con métricas clave.
 
 ---
 
-## 🚀 Tecnologías Utilizadas
+## 🛠️ Tecnologías Utilizadas
 
-- **Node.js** – Entorno de ejecución.
-- **Express** – Framework para la creación de la API REST.
-- **Firestore (Firebase Admin SDK)** – Base de datos NoSQL.
-- **JWT (jsonwebtoken)** – Autenticación basada en tokens.
-- **bcryptjs** – Hashing seguro de contraseñas.
-- **Zod** – Validación de datos.
-- **dotenv** – Manejo de variables de entorno.
-- **CORS** – Control de acceso entre dominios.
-- **Nodemon** – Recarga automática en desarrollo.
+- **Node.js (ESM)**
+- **Express.js**
+- **Firebase Firestore (firebase-admin)**
+- **JWT (JSON Web Tokens)**
+- **bcryptjs** para el hash de contraseñas
+- **Zod** para validación de datos
+- **RBAC** (Roles y Permisos)
+- **Arquitectura por capas**
+- **Auditoría y Dashboard**
 
 ---
 
 ## 📁 Estructura del Proyecto
 
 ```
-erp-backend/
-├─ src/
-│  ├─ app.js
-│  ├─ server.js
-│  ├─ config/
-│  │  ├─ env.js
-│  │  ├─ firebase.js
-│  │  └─ jwt.js
-│  ├─ middlewares/
-│  │  ├─ auth.js
-│  │  ├─ errorHandler.js
-│  │  ├─ notFound.js
-│  │  └─ validate.js
-│  ├─ modules/
-│  │  ├─ health/
-│  │  ├─ auth/
-│  │  └─ users/
-│  ├─ routes/
-│  │  └─ index.js
-│  └─ utils/
-│     └─ asyncHandler.js
-├─ .env
-├─ .gitignore
-└─ package.json
-```
-
----
-
-## ⚙️ Instalación y Configuración
-
-### 1. Clonar el repositorio
-```bash
-git clone <repository-url>
-cd erp-backend
-```
-
-### 2. Instalar dependencias
-```bash
-npm install
-```
-
-### 3. Configurar variables de entorno
-
-Crear un archivo `.env`:
-
-```env
-PORT=3001
-NODE_ENV=development
-CORS_ORIGIN=http://localhost:3000
-
-JWT_SECRET=super_secret_jwt_key
-JWT_EXPIRES_IN=15m
-JWT_REFRESH_SECRET=super_secret_refresh_key
-JWT_REFRESH_EXPIRES_IN=7d
-
-FIREBASE_PROJECT_ID=tu_project_id
-FIREBASE_CLIENT_EMAIL=tu_client_email
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nTU_PRIVATE_KEY\n-----END PRIVATE KEY-----\n"
-```
-
-### 4. Ejecutar el proyecto
-
-```bash
-npm run dev
-```
-
-La API estará disponible en:
-
-```
-http://localhost:3001
+src/
+├── app.js
+├── server.js
+├── config/
+│   ├── firebase.js
+│   └── jwt.js
+├── middlewares/
+│   ├── auth.js
+│   ├── requirePermissions.js
+│   ├── validate.js
+│   └── errorHandler.js
+├── modules/
+│   ├── auth/
+│   ├── users/
+│   ├── roles/
+│   ├── permissions/
+│   ├── clients/
+│   ├── suppliers/
+│   ├── products/
+│   ├── inventory/
+│   ├── recepciones/
+│   ├── audit/
+│   └── dashboard/
+├── routes/
+│   └── index.js
+├── utils/
+│   └── audit.js
+└── seeds/
+    └── create-first-user.js
 ```
 
 ---
 
 ## 🔐 Autenticación
 
-La autenticación se realiza mediante **JSON Web Tokens (JWT)**.
-
-### Endpoint de Login
-
-```http
+### Login
+```
 POST /api/auth/login
 ```
 
-#### Request
+**Request**
 ```json
 {
-  "usuario": "admin",
-  "password": "123456"
+  "usuario": "proyecto",
+  "password": "Hello2U\""
 }
 ```
 
-#### Response
+**Response**
 ```json
 {
-  "token": "jwt_token",
-  "user": {
-    "id": "admin001",
-    "nombre": "Marco",
-    "apellido": "Ramirez",
-    "email": "admin@erp.com",
-    "usuario": "admin",
-    "role": "ADMIN",
-    "roleId": "role_admin",
-    "permissions": ["dashboard:read"],
-    "activo": true
-  }
-}
-```
-
-### Obtener Usuario Autenticado
-
-```http
-GET /api/auth/me
-Authorization: Bearer <token>
-```
-
-#### Response
-```json
-{
-  "user": {
-    "id": "admin001",
-    "nombre": "Marco",
-    "apellido": "Ramirez",
-    "email": "admin@erp.com",
-    "usuario": "admin",
-    "role": "ADMIN",
-    "roleId": "role_admin",
-    "permissions": ["dashboard:read"],
-    "activo": true
-  }
+  "token": "JWT_TOKEN"
 }
 ```
 
 ---
 
-## 👥 Módulo de Usuarios
+## 🛡️ Control de Acceso (RBAC)
 
-### 1. Listar Usuarios
+El sistema utiliza permisos con el formato:
 
-```http
-GET /api/users
-Authorization: Bearer <token>
+```
+recurso:accion
 ```
 
-#### Query Params
-- `q`: búsqueda por nombre, email o usuario.
-- `activo`: filtrar por estado.
-- `page`: número de página.
-- `limit`: número de registros por página.
+### Ejemplos
+- `users:create`
+- `products:update`
+- `inventory:update`
+- `dashboard:read`
+- `audit:read`
 
-#### Response
+---
+
+## 📦 Módulos del Sistema
+
+### 🔹 Auth
+- `POST /api/auth/login`
+- `GET /api/auth/me`
+
+### 🔹 Users
+- `GET /api/users`
+- `GET /api/users/:id`
+- `POST /api/users`
+- `PATCH /api/users/:id`
+- `PATCH /api/users/:id/toggle-active`
+- `DELETE /api/users/:id`
+
+### 🔹 Roles
+- `GET /api/roles`
+- `GET /api/roles/:id`
+- `POST /api/roles`
+- `PATCH /api/roles/:id`
+- `DELETE /api/roles/:id`
+
+### 🔹 Permissions
+- `GET /api/permissions`
+- `GET /api/permissions/:id`
+- `POST /api/permissions`
+- `PATCH /api/permissions/:id`
+- `DELETE /api/permissions/:id`
+- `POST /api/permissions/seed`
+
+### 🔹 Clients
+- `GET /api/clients`
+- `GET /api/clients/:id`
+- `POST /api/clients`
+- `PATCH /api/clients/:id`
+- `PATCH /api/clients/:id/toggle-active`
+- `DELETE /api/clients/:id`
+
+### 🔹 Suppliers
+- `GET /api/suppliers`
+- `GET /api/suppliers/:id`
+- `POST /api/suppliers`
+- `PATCH /api/suppliers/:id`
+- `PATCH /api/suppliers/:id/toggle-active`
+- `DELETE /api/suppliers/:id`
+
+### 🔹 Products
+- `GET /api/products`
+- `GET /api/products/:id`
+- `POST /api/products`
+- `PATCH /api/products/:id`
+- `PATCH /api/products/:id/toggle-active`
+- `DELETE /api/products/:id`
+
+### 🔹 Inventory
+- `GET /api/inventory`
+- `GET /api/inventory/:productId`
+- `POST /api/inventory/:productId/adjust`
+- `GET /api/inventory/movements`
+
+### 🔹 Recepciones
+- `GET /api/recepciones`
+- `GET /api/recepciones/:id`
+- `POST /api/recepciones`
+- `PATCH /api/recepciones/:id`
+- `POST /api/recepciones/:id/confirm`
+- `DELETE /api/recepciones/:id`
+
+### 🔹 Audit
+- `GET /api/audit`
+- `GET /api/audit/:id`
+- `POST /api/audit`
+
+### 🔹 Dashboard
+- `GET /api/dashboard/summary`
+- `GET /api/dashboard/recent-activity`
+
+---
+
+## 📝 Formato de Respuestas
+
+### Listados
 ```json
 {
   "items": [],
@@ -186,220 +187,129 @@ Authorization: Bearer <token>
 }
 ```
 
----
-
-### 2. Obtener Usuario por ID
-
-```http
-GET /api/users/:id
-```
-
-#### Response
+### Obtener un elemento
 ```json
 {
-  "item": {
-    "id": "abc123",
-    "nombre": "Juan",
-    "apellido": "Pérez",
-    "email": "juan@erp.com",
-    "usuario": "juanp",
-    "role": "OPERADOR",
-    "roleId": "role_operador",
-    "permissions": [],
-    "activo": true,
-    "createdAt": "2026-04-14T00:00:00.000Z",
-    "updatedAt": "2026-04-14T00:00:00.000Z"
-  }
-}
-```
-
----
-
-### 3. Crear Usuario
-
-```http
-POST /api/users
-```
-
-#### Request
-```json
-{
-  "nombre": "Juan",
-  "apellido": "Pérez",
-  "email": "juan@erp.com",
-  "usuario": "juanp",
-  "password": "123456",
-  "role": "OPERADOR",
-  "roleId": "role_operador",
-  "permissions": [],
-  "activo": true
-}
-```
-
-#### Response
-```json
-{
-  "message": "Usuario creado correctamente",
-  "item": { ... }
-}
-```
-
----
-
-### 4. Actualizar Usuario
-
-```http
-PATCH /api/users/:id
-```
-
-#### Response
-```json
-{
-  "message": "Usuario actualizado correctamente",
-  "item": { ... }
-}
-```
-
----
-
-### 5. Activar/Desactivar Usuario
-
-```http
-PATCH /api/users/:id/toggle-active
-```
-
-#### Request
-```json
-{
-  "activo": false
-}
-```
-
-#### Response
-```json
-{
-  "message": "Estado del usuario actualizado correctamente",
-  "item": { ... }
-}
-```
-
----
-
-### 6. Eliminar Usuario
-
-```http
-DELETE /api/users/:id
-```
-
-#### Response
-```json
-{
-  "message": "Usuario eliminado correctamente"
-}
-```
-
----
-
-## 📦 Endpoint de Salud
-
-```http
-GET /api/health
-```
-
-#### Response
-```json
-{
-  "message": "API funcionando correctamente",
-  "timestamp": "2026-04-14T00:00:00.000Z"
-}
-```
-
----
-
-## 📑 Formato Estándar de Respuestas
-
-### Respuesta Exitosa
-```json
-{
-  "message": "Operación realizada correctamente",
   "item": {}
 }
 ```
 
-### Respuesta de Listado
+### Creación / Actualización
 ```json
 {
-  "items": [],
-  "total": 0,
-  "page": 1,
-  "limit": 10
+  "message": "Operación exitosa",
+  "item": {}
 }
 ```
 
-### Respuesta de Error
+### Eliminación
 ```json
 {
-  "message": "Descripción del error"
-}
-```
-
-### Error de Validación
-```json
-{
-  "message": "Error de validación",
-  "errors": {
-    "campo": "Mensaje de error"
-  }
+  "message": "Eliminado correctamente"
 }
 ```
 
 ---
 
-## 🔒 Seguridad
+## 🧾 Auditoría
 
-- Contraseñas almacenadas con **bcrypt**.
-- Autenticación mediante **JWT**.
-- Middleware de protección de rutas.
-- Validación de datos con **Zod**.
-- Manejo centralizado de errores.
-- Uso de variables de entorno para información sensible.
+Todas las acciones relevantes del sistema son registradas automáticamente en la colección `audit`, incluyendo:
 
----
-
-## 🧪 Pruebas con Postman
-
-Se recomienda crear una colección en Postman con los endpoints definidos para facilitar las pruebas y la integración con el frontend.
+- Creación, actualización y eliminación de registros
+- Ajustes de inventario
+- Confirmación de recepciones
+- Gestión de roles y permisos
 
 ---
 
-## 📈 Próximos Módulos
+## 📊 Dashboard
 
-El sistema está diseñado para escalar con los siguientes módulos:
+El endpoint `/api/dashboard/summary` proporciona:
 
-- Roles
-- Permisos
-- Clientes
-- Proveedores
-- Productos
-- Inventario
-- Recepciones
-- Auditoría
-- Dashboard
+- Totales de usuarios, clientes, proveedores y productos
+- Productos con bajo stock
+- Recepciones recientes
+- Movimientos de inventario
+- Actividad reciente del sistema
 
 ---
 
-## 👨‍🏫 Propósito Académico
+## 🌱 Script para Crear el Primer Usuario
 
-Este backend sirve como base para que los estudiantes:
+### Ejecutar el Script
 
-- Consuman una API REST real.
-- Implementen autenticación en el frontend.
-- Gestionen permisos por rol.
-- Desarrollen interfaces CRUD completas.
-- Comprendan arquitecturas empresariales.
+```bash
+npm run seed:first-user
+```
+
+### Credenciales del Usuario Inicial
+
+| Campo    | Valor              |
+|----------|--------------------|
+| Usuario  | proyecto           |
+| Password | Hello2U"           |
+| Email    | proyecto@erp.local |
+| Rol      | ADMIN              |
+
+---
+
+## ⚙️ Instalación y Ejecución
+
+### 1. Instalar dependencias
+```bash
+npm install
+```
+
+### 2. Configurar Firebase
+Coloca tu archivo de credenciales en:
+```
+src/config/serviceAccountKey.json
+```
+
+### 3. Variables de entorno (.env)
+```env
+PORT=3001
+JWT_SECRET=supersecretkey
+```
+
+### 4. Crear el usuario inicial
+```bash
+npm run seed:first-user
+```
+
+### 5. Ejecutar el servidor
+```bash
+npm run dev
+```
+
+El servidor estará disponible en:
+```
+http://localhost:3001/api
+```
+
+---
+
+## 🧪 Endpoint de Salud
+
+```
+GET /api/health
+```
+
+**Response**
+```json
+{
+  "status": "ok"
+}
+```
+
+---
+
+## 🎯 Objetivo Académico
+
+Este backend está diseñado para que los alumnos desarrollen el **frontend** utilizando tecnologías modernas como React o Nuxt, consumiendo una API REST segura y escalable.
 
 ---
 
 ## 📄 Licencia
 
-Este proyecto se distribuye con fines académicos y educativos.
+Este proyecto es de uso académico y educativo.

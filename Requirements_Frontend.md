@@ -289,5 +289,5 @@ Este proyecto tiene como finalidad que el alumno aplique conocimientos de:
 
 ---
 
-**Autor:** Proyecto académico DEMEN ERP  
-**Licencia:** Uso educativo.
+**Autor:** MTW. Marco Aurelio Ramírez Silva 
+**Licencia:** Uso Educativo.
